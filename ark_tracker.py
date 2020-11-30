@@ -12,8 +12,10 @@ from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import glob
-from data_analysis import top_ten_table, save_to_db
+from data_analysis import DataAnalysis
 
+
+DA = DataAnalysis()
 
 def make_folder():
     today = date.today()
@@ -21,7 +23,6 @@ def make_folder():
     if not (os.path.exists(newdir)):
         os.mkdir(newdir)
     return newdir
-
 
 def get_data():
     urls = [
@@ -43,7 +44,7 @@ def get_data():
         with open(newdir + fname, "wb") as csv:
             csv.write(r.content)
     send_email(newdir)
-    save_to_db(newdir)
+    DA.save_to_db(newdir)
 
     print(str(datetime.now()) + " sent!!!")
 
@@ -89,12 +90,12 @@ def send_email(file_dir):
             """
     tables = []
     for file in files:
-        tables.append(top_ten_table(file))
+        tables.append(DA.top_ten_table(file))
 
     receivers = {
         # 'Kwou' : 'kzhengnm@gmail.com',
-        'Joe' : 'joe_yang999@yahoo.com',
-        'Eugene': 'yuanjinglin88@gmail.com',
+        # 'Joe' : 'joe_yang999@yahoo.com',
+        # 'Eugene': 'yuanjinglin88@gmail.com',
         "Lin": "linzhengnm@gmail.com"
     }
 
@@ -138,16 +139,19 @@ def send_email(file_dir):
 
 
 if __name__ == "__main__":
-    # get_data()
-    scheduled_time = "19:00"
+    get_data()
+    # scheduled_time = "19:00"
 
-    schedule.every().monday.at(scheduled_time).do(get_data)
-    schedule.every().tuesday.at(scheduled_time).do(get_data)
-    schedule.every().wednesday.at(scheduled_time).do(get_data)
-    schedule.every().thursday.at(scheduled_time).do(get_data)
-    schedule.every().friday.at(scheduled_time).do(get_data)
+    # schedule.every().monday.at(scheduled_time).do(get_data)
+    # schedule.every().tuesday.at(scheduled_time).do(get_data)
+    # schedule.every().wednesday.at(scheduled_time).do(get_data)
+    # schedule.every().thursday.at(scheduled_time).do(get_data)
+    # schedule.every().friday.at(scheduled_time).do(get_data)
 
-    while True:
-        schedule.run_pending()
-        print(datetime.now())
-        time.sleep(1)
+    # while True:
+    #     schedule.run_pending()
+    #     print(datetime.now())
+    #     time.sleep(1)
+
+    
+
