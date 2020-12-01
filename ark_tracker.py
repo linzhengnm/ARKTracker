@@ -15,7 +15,7 @@ import glob
 from data_analysis import DataAnalysis
 
 
-DA = DataAnalysis()
+DA = DataAnalysis('ark_holdings.db')
 
 def make_folder():
     today = date.today()
@@ -90,7 +90,7 @@ def send_email(file_dir):
             """
     tables = []
     funds = ['PRNT', 'IZRL', 'ARKK', 'ARKW', 'ARKG', 'ARKQ', 'ARKF']
-    today = date.today().replace(month=11, day=30)
+    today = date.today()
     for fund in funds:
         tables.append(DA.make_daily_top_ten_table(today, fund))
     # for file in files:

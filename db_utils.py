@@ -12,6 +12,18 @@ class ArkTrackDB():
         con = sqlite3.connect(self.db)
         my_cursor = con.cursor()
 
+        # sql = """
+        # CREATE TABLE arkdata (
+        #     date text NOT NULL,
+        #     fund text NOT NULL,
+        #     company text NOT NULL,
+        #     ticker text,
+        #     cusip text NOT NULL,
+        #     shares real NOT NULL,
+        #     value real NOT NULL,
+        #     weight real NOT NULL
+        #     )"""
+
         sql = """
         CREATE TABLE arkdata (
             date text NOT NULL,
@@ -21,7 +33,8 @@ class ArkTrackDB():
             cusip text NOT NULL,
             shares real NOT NULL,
             value real NOT NULL,
-            weight real NOT NULL
+            weight real NOT NULL,
+            unique (date, fund, ticker)
             )"""
 
         my_cursor.execute(sql)
@@ -32,15 +45,21 @@ class ArkTrackDB():
     def insert_row(self, row:tuple):
         con = sqlite3.connect(self.db)
         my_cursor = con.cursor()
-        my_cursor.execute("INSERT INTO arkdata VALUES (?, ?, ?, ? ,?, ?, ?, ?)", row)
-        con.commit()
+        try:
+            my_cursor.execute("INSERT INTO arkdata VALUES (?, ?, ?, ? ,?, ?, ?, ?)", row)
+            con.commit()
+        except:
+            pass
         con.close()
 
     def insert_rows(self, rows:tuple):
         con = sqlite3.connect(self.db)
         my_cursor = con.cursor()
-        my_cursor.executemany("INSERT INTO arkdata VALUES (?, ?, ?, ? ,?, ?, ?, ?)",rows)
-        con.commit()
+        try:
+            my_cursor.executemany("INSERT INTO arkdata VALUES (?, ?, ?, ? ,?, ?, ?, ?)",rows)
+            con.commit()
+        except:
+            pass
         con.close()
 
     def view_all(self):
@@ -68,5 +87,4 @@ class ArkTrackDB():
         my_cursor.execute("DROP TABLE arkdata")
         con.commit()
         con.close()
-
 
