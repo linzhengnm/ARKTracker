@@ -36,7 +36,7 @@ class ArkTrackDB():
         con.commit()
         con.close()
 
-    def insert_rows(self, rows):
+    def insert_rows(self, rows:tuple):
         con = sqlite3.connect(self.db)
         my_cursor = con.cursor()
         my_cursor.executemany("INSERT INTO arkdata VALUES (?, ?, ?, ? ,?, ?, ?, ?)",rows)
@@ -57,8 +57,10 @@ class ArkTrackDB():
         my_cursor = con.cursor()
         my_cursor.execute("SELECT * FROM arkdata WHERE date=?", (date, ))
         result = my_cursor.fetchall()
+        df = pd.DataFrame(result)
+        df.columns = [x[0] for x in my_cursor.description]
         con.close
-        return result
+        return df
 
     def drop_table(self):
         con = sqlite3.connect(self.db)
@@ -67,5 +69,4 @@ class ArkTrackDB():
         con.commit()
         con.close()
 
-    
 

@@ -89,8 +89,12 @@ def send_email(file_dir):
             </html>
             """
     tables = []
-    for file in files:
-        tables.append(DA.top_ten_table(file))
+    funds = ['PRNT', 'IZRL', 'ARKK', 'ARKW', 'ARKG', 'ARKQ', 'ARKF']
+    today = date.today().replace(month=11, day=30)
+    for fund in funds:
+        tables.append(DA.make_daily_top_ten_table(today, fund))
+    # for file in files:
+    #     tables.append(DA.top_ten_table(file))
 
     receivers = {
         # 'Kwou' : 'kzhengnm@gmail.com',
