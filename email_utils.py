@@ -61,8 +61,8 @@ class EmailUtils():
 
         receivers = {
             # 'Kwou' : 'kzhengnm@gmail.com',
-            # "Joe": "joe_yang999@yahoo.com",
-            # "Eugene": "yuanjinglin88@gmail.com",
+            "Joe": "joe_yang999@yahoo.com",
+            "Eugene": "yuanjinglin88@gmail.com",
             "Lin": "linzhengnm@gmail.com",
         }
 
