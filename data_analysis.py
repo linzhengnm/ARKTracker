@@ -40,7 +40,8 @@ class DataAnalysis:
 
     def get_by_date(self, input_date):
         db = self.db
-        formatted_date = date.strftime(input_date, "%m/%d/%Y")
+        # formatted_date = date.strftime(input_date, "%m/%d/%Y")
+        formatted_date = '/'.join(map(str, [input_date.month, input_date.day, input_date.year]))
         non_trading_days = NYSECalendar().get_non_trading_days()
         if formatted_date not in non_trading_days:
             data = db.get_by_date(formatted_date)
@@ -99,8 +100,8 @@ class DataAnalysis:
         df[column_names[8]] = top_ten_curr['weight'].map('{:,.2f}%'.format)
         df[column_names[9]] = (top_ten_curr['shares'] - top_ten_prev['shares']).map('{:,.0f}'.format)
         df[column_names[10]] = top_ten_curr['value'] - top_ten_prev['value']
-        df[column_names[11]] = ['${:,.2f}M'.format(x) for x in df[column_names[11]]/1000000]
-        df[column_names[11]] = (top_ten_curr['weight'] - top_ten_prev['weight']).map('{:,.2f}%'.format)
+        df[column_names[10]] = ['${:,.2f}M'.format(x) for x in df[column_names[10]]/1000000]
+        df[column_names[11]] = ((top_ten_curr['weight'] - top_ten_prev['weight'])/top_ten_prev['weight']).map('{:,.2%}'.format)
         df.reset_index(drop=True, inplace=True)
 
         daily_top_ten_table = build_table(df, "grey_light")
@@ -109,3 +110,7 @@ class DataAnalysis:
     def get_all(self):
         db = self.db
         db.view_all()
+
+
+# DA = DataAnalysis("ark_holdings.db")
+# DA.get_all()
