@@ -1,9 +1,7 @@
 import requests
 import os
 from datetime import date
-from data_analysis import DataAnalysis
 
-DA = DataAnalysis("ark_holdings.db")
 class ArkDataUtils:
     def __init__(self):
         self.urls = [
@@ -24,13 +22,13 @@ class ArkDataUtils:
             r = requests.get(url, allow_redirects=True)
             # Get file name
             fname = url.split("/")[-1]
-            with open(newdir + fname, "wb") as csv:
+            with open(newdir + '/' + fname, "wb") as csv:
                 csv.write(r.content)
         return newdir
 
     def make_folder(self):
         today = date.today()
-        newdir = os.getcwd() + "/data/" + str(today) + "/"
+        newdir = os.getcwd() + "/data/" + str(today) 
         if not (os.path.exists(newdir)):
             os.mkdir(newdir)
         return newdir

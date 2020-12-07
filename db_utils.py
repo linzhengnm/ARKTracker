@@ -27,6 +27,7 @@ class ArkTrackDB():
 
         my_cursor.execute(sql)
         con.commit()
+        print('Your Database has been created!!!')
         con.close()
 
     def insert_row(self, row:tuple):
@@ -45,7 +46,6 @@ class ArkTrackDB():
         try:
             my_cursor.executemany("INSERT INTO arkdata VALUES (?, ?, ?, ? ,?, ?, ?, ?)",rows)
             con.commit()
-            print('Saved')
         except:
             pass
         con.close()

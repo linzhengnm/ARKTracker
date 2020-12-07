@@ -1,6 +1,7 @@
 from os import curdir
 from numpy.lib import twodim_base
 import pandas as pd
+from pandas.core.indexes.extension import make_wrapped_arith_op
 from pretty_html_table import build_table
 from db_utils import *
 import glob
@@ -12,6 +13,11 @@ from datetime import datetime, date
 class DataAnalysis:
     def __init__(self, db:str):
         self.db = ArkTrackDB(db)
+        self.funds = ["ARKK", "ARKW", "ARKG", "ARKQ", "ARKF"]
+
+    def view_all(self):
+        db = self.db
+        db.view_all()
 
     def top_ten_table(self, csv):
         df = pd.read_csv(csv)
@@ -22,7 +28,7 @@ class DataAnalysis:
 
     def save_to_db(self, file_dir):
         db = self.db
-        file_list = glob.glob(file_dir + "*.csv")
+        file_list = glob.glob(file_dir + "/*.csv")
         for csv_file in file_list:
             with open(csv_file, "rb") as fin:
                 df = pd.read_csv(csv_file)
@@ -107,10 +113,84 @@ class DataAnalysis:
         daily_top_ten_table = build_table(df, "grey_light")
         return daily_top_ten_table
 
-    def get_all(self):
-        db = self.db
-        db.view_all()
+    def get_stock_diff(self, input_date, fund_name):
+        prev_tday = self.get_prev_trading_date(input_date)
+        curr_holdings = self.get_fund_holdings(input_date, fund_name)
+        prev_holdings = self.get_fund_holdings(prev_tday, fund_name)
+        curr_tickers = curr_holdings['ticker'].to_list()
+        prev_tickers = prev_holdings['ticker'].to_list()
+
+        result = {}
+        curr_set = set(curr_tickers)
+        prev_set = set(prev_tickers)
+        result['fund'] = fund_name
+        result['added'] = list(curr_set - prev_set)
+        result['removed'] = list(prev_set - curr_set)
+        return result
+
+    def get_new_acquisitions(self, input_date):
+        funds = self.funds
+        new_acqs = []
+        for fund in funds:
+            result = self.get_stock_diff(input_date, fund)
+            if len(result['added']):
+                new_acqs.append(result)
+        if len(new_acqs):
+            return new_acqs
+        else:
+            return None
+
+    def get_sell_offs(self, input_date):
+        funds = self.funds
+        sell_offs = []
+        for fund in funds:
+            result = self.get_stock_diff(input_date, fund)
+            if len(result['removed']):
+                sell_offs.append(result)
+        if len(sell_offs):
+            return sell_offs
+        else:
+            return None
+
+    def make_new_acqs_table(self, input_date):
+        new_acqs = self.get_new_acquisitions(input_date)
+        df = pd.DataFrame(columns=['Fund', 'Ticker'])
+        funds = []
+        tickers = []
+        if new_acqs is not None:
+            for new_acq in new_acqs:
+                funds.append(new_acq['fund'])
+                tickers.append(', '.join(new_acq['added']))
+        else:
+            return 'No New Acquisition Today!<br>'
+
+        df['Fund'] = funds
+        df['Ticker'] = tickers
+        acqs_table = build_table(df, "green_light")
+        return acqs_table
+
+    def make_sell_offs_table(self, input_date):
+        sell_offs = self.get_sell_offs(input_date)
+        df = pd.DataFrame(columns=['Fund', 'Ticker'])
+        funds = []
+        tickers = []
+        if sell_offs is not None:
+            for sell_off in sell_offs:
+                funds.append(sell_off['fund'])
+                tickers.append(', '.join(sell_off['added']))
+        else:
+            return 'No Stock Sell Off Today!<br>'
+
+        df['Fund'] = funds
+        df['Ticker'] = tickers
+        sell_offs_table = build_table(df, "red_light")
+        return sell_offs_table
 
 
 # DA = DataAnalysis("ark_holdings.db")
-# DA.get_all()
+# # # # DA.get_all()
+# # funds = ['ARKK', 'ARKQ', 'ARKW', 'ARKG']
+# today = date.today().replace(month=11, day=30)
+# x = DA.make_new_acqs_table(today)
+
+# print(x)

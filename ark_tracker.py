@@ -9,12 +9,12 @@ from email_utils import EmailUtils
 
 def run_ark_bot():
     ADU = ArkDataUtils() 
-    # DA = DataAnalysis("ark_holdings.db")
-    # EMAIL = EmailUtils()
+    DA = DataAnalysis("ark_holdings.db")
+    EMAIL = EmailUtils()
 
     data = ADU.get_ark_data()
-    # DA.save_to_db(data)
-    # EMAIL.send_email(data)
+    DA.save_to_db(data)
+    EMAIL.send_email(data)
 
     print('Job Completed!!!')
 

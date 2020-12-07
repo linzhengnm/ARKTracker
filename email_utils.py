@@ -12,7 +12,7 @@ DA = DataAnalysis("ark_holdings.db")
 
 class EmailUtils():
     def send_email(self, file_dir):
-        files = glob.glob(file_dir + "*.csv")
+        files = glob.glob(file_dir + "/*.csv")
         EMAIL_ADDRESS = os.environ.get("ark_tracker_email")
         EMAIL_PASSWORD = os.environ.get("ark_tracker_password")
         html = """\
@@ -20,10 +20,23 @@ class EmailUtils():
             
                 <body>
                     <p>Hi {name},<br><br>
-                    Here is your update for <strong><a href="https://ark-funds.com/investor-resources">ARK INVEST</a></strong></b>.
+                    AS <b>{today}</b>
+                    <br>
+                    Here is your update for <strong><a href="https://ark-funds.com/investor-resources">ARK INVEST</a></strong>.
                     <br>
                     <br>
-                    <b>TOP 10 HOLDINGS AS <b>{today}<b>
+                    <strong>Today's New Acquisitions:</strong>
+                    <br>
+                    {new_acqs_table}
+                    <br>
+                    <strong>Today's Sell-Offs:</strong>
+                    <br>
+                    {sell_offs_table}
+                    <br>
+
+                    <b>TOP 10 HOLDINGS </b>
+                    <br>
+                    {table0}
                     <br>
                     {table1}
                     <br>
@@ -32,12 +45,6 @@ class EmailUtils():
                     {table3}
                     <br>
                     {table4}
-                    <br>
-                    {table5}
-                    <br>
-                    {table6}
-                    <br>
-                    {table7}
                     <br>
                     <br>
                     Good Luck,
@@ -51,8 +58,11 @@ class EmailUtils():
                 </html>
                 """
         tables = []
-        funds = ["PRNT", "IZRL", "ARKK", "ARKW", "ARKG", "ARKQ", "ARKF"]
-        today = date.today()
+        funds = ["ARKK", "ARKW", "ARKG", "ARKQ", "ARKF"]
+        today = date.today().replace(day=4)
+
+        new_acqs_table = DA.make_new_acqs_table(today)
+        sell_offs_table = DA.make_sell_offs_table(today)
 
         for fund in funds:
             tables.append(DA.make_daily_top_ten_table(today, fund))
@@ -61,8 +71,8 @@ class EmailUtils():
 
         receivers = {
             # 'Kwou' : 'kzhengnm@gmail.com',
-            "Joe": "joe_yang999@yahoo.com",
-            "Eugene": "yuanjinglin88@gmail.com",
+            # "Joe": "joe_yang999@yahoo.com",
+            # "Eugene": "yuanjinglin88@gmail.com",
             "Lin": "linzhengnm@gmail.com",
         }
 
@@ -82,15 +92,15 @@ class EmailUtils():
                 msg.attach(
                     MIMEText(
                         html.format(
+                            new_acqs_table=new_acqs_table,
+                            sell_offs_table=sell_offs_table,
                             name=name,
                             today=datetime.now().date(),
-                            table1=tables[0],
-                            table2=tables[1],
-                            table3=tables[2],
-                            table4=tables[3],
-                            table5=tables[4],
-                            table6=tables[5],
-                            table7=tables[6],
+                            table0=tables[0],
+                            table1=tables[1],
+                            table2=tables[2],
+                            table3=tables[3],
+                            table4=tables[4],
                         ),
                         "html",
                     )
