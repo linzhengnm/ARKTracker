@@ -1,6 +1,8 @@
 from os import curdir
 from numpy.lib import twodim_base
+from numpy.lib.arraysetops import unique
 import pandas as pd
+from pandas.core.algorithms import diff, rank
 from pandas.core.indexes.extension import make_wrapped_arith_op
 from pretty_html_table import build_table
 from db_utils import *
@@ -177,7 +179,7 @@ class DataAnalysis:
         if sell_offs is not None:
             for sell_off in sell_offs:
                 funds.append(sell_off['fund'])
-                tickers.append(', '.join(sell_off['added']))
+                tickers.append(', '.join(sell_off['removed']))
         else:
             return 'No Stock Sell Off Today!<br>'
 
@@ -186,11 +188,119 @@ class DataAnalysis:
         sell_offs_table = build_table(df, "red_light")
         return sell_offs_table
 
+    def get_curr_total_top_ten(self, input_date):
+        holdings = self.get_by_date(input_date)
+        ark_funds = holdings.loc[holdings['fund'].str.contains('ARK')]
+        top_ten= ark_funds.groupby(['ticker', 'company']).sum().sort_values(by=['value'], ascending=False).head(10).reset_index()
+        df = pd.DataFrame(columns=['rank', 'ticker', 'company', 'shares', 'value'])
+        df['rank'] = top_ten.index + 1
+        df['ticker'] = top_ten['ticker']
+        df['company'] = top_ten['company']
+        df['shares'] = top_ten['shares']
+        df['value'] = top_ten['value']
+        return df
+
+    def get_prev_total_top_ten(self, input_date, top_ten_tickers):
+        holdings = self.get_by_date(input_date)
+        ark_funds = holdings.loc[holdings['fund'].str.contains('ARK')]
+        group_sums = ark_funds.groupby(['ticker', 'company']).sum()
+        sorted_sums = group_sums.sort_values(by="value", ascending=False).reset_index()
+        df = pd.DataFrame(columns=['rank', 'ticker', 'company', 'shares', 'value'])
+        df['rank'] = sorted_sums.index + 1
+        df['ticker'] = sorted_sums['ticker']
+        df['company'] = sorted_sums['company']
+        df['shares'] = sorted_sums['shares']
+        df['value'] = sorted_sums['value']
+        top_ten = df.loc[df['ticker'].isin(top_ten_tickers)]
+        top_ten['ticker'] = pd.Categorical(top_ten['ticker'], top_ten_tickers)
+        top_ten.sort_values(by='ticker', inplace=True)
+        top_ten.reset_index(drop=True, inplace=True)
+
+        # group_sums.reset_index(inplace=True)
+        # top_ten_prev = group_sums.loc[group_sums['ticker'].isin(top_ten_tickers)]
+        # top_ten_prev['ticker'] = pd.Categorical(top_ten_prev['ticker'], top_ten_tickers)
+        # top_ten_prev.sort_values(by='ticker', inplace=True)
+        # top_ten_prev.reset_index(drop=True, inplace=True)
+        return top_ten
+    
+    # def get_prev_ranks(self, input_date, top_ten_tickers):
+    #     holdings = self.get_by_date(input_date)
+    #     ark_funds = holdings.loc[holdings['fund'].str.contains('ARK')]
+    #     group_sums = ark_funds.groupby(['ticker', 'company']).sum()
+    #     sorted_sums = group_sums.sort_values(by="value", ascending=False).reset_index()
+    #     df = pd.DataFrame(columns=['rank', 'ticker'])
+    #     df['rank'] = sorted_sums.index + 1
+    #     df['ticker'] = sorted_sums['ticker']
+    #     top_ten = df.loc[df['ticker'].isin(top_ten_tickers)]
+    #     top_ten['ticker'] = pd.Categorical(top_ten['ticker'], top_ten_tickers)
+    #     top_ten.sort_values(by='ticker', inplace=True)
+    #     top_ten.reset_index(drop=True, inplace=True)
+
+    #     print(top_ten)
+
+    def make_daily_total_top_ten_table(self, input_date):
+        curr_tday_str = date.strftime(input_date, "%m/%d/%Y")
+        prev_tday = self.get_prev_trading_date(input_date)
+        prev_tday_str = date.strftime(prev_tday, "%m/%d/%Y")
+        top_ten_curr = self.get_curr_total_top_ten(input_date)
+        top_ten_tickers = top_ten_curr['ticker'].to_list()
+        top_ten_prev = self.get_prev_total_top_ten(prev_tday, top_ten_tickers)
+
+        column_names = [
+            "Rank",
+            "Rank Change",
+            "Company",
+            "Ticker",
+            "Shares on " + str(prev_tday_str),
+            "Value on " + str(prev_tday_str),
+            "Shares on " + str(curr_tday_str),
+            "Value on " + str(curr_tday_str),
+            "Shares Difference",
+            "Value Difference",
+        ]
+        rank_diff_str_list = []
+        ranks = pd.DataFrame(columns=['diff', 'diff_str'])
+        #  = top_ten_prev['rank'] - top_ten_curr['rank']
+        rank_diffs = (top_ten_prev['rank'] - top_ten_curr['rank']).to_list()
+
+        for rank_diff in rank_diffs:
+            if rank_diff < 0:
+                rank_diff_str_list.append('\u2B07 ' + str(abs(rank_diff)))
+            elif rank_diff > 0:
+                rank_diff_str_list.append('\u2B06 ' + str(abs(rank_diff)))
+            else:
+                rank_diff_str_list.append('\u27F3')
+
+        ranks['diff'] = rank_diffs
+        ranks['diff_str'] = rank_diff_str_list
+        
+        df = pd.DataFrame(columns=column_names)
+        df[column_names[0]] = top_ten_curr['rank']
+        df[column_names[1]] = ranks['diff_str']
+        df[column_names[2]] = top_ten_curr['company']
+        df[column_names[3]] = top_ten_curr['ticker']
+        df[column_names[4]] = top_ten_prev['shares'].map('{:,.0f}'.format)
+        df[column_names[5]] = ['${:,.2f}M'.format(x) for x in top_ten_prev['value']/1000000]
+        df[column_names[6]] = top_ten_curr['shares'].map('{:,.0f}'.format)
+        df[column_names[7]] = ['${:,.2f}M'.format(x) for x in top_ten_curr['value']/1000000]
+        df[column_names[8]] = (top_ten_curr['shares'] - top_ten_prev['shares']).map('{:,.0f}'.format)
+        df[column_names[9]] = top_ten_curr['value'] - top_ten_prev['value']
+        df[column_names[9]] = ['${:,.2f}M'.format(x) for x in df[column_names[9]]/1000000]
+
+        daily_total_top_ten_table = build_table(df, 'grey_light')
+        return daily_total_top_ten_table
+
 
 # DA = DataAnalysis("ark_holdings.db")
-# # # # DA.get_all()
-# # funds = ['ARKK', 'ARKQ', 'ARKW', 'ARKG']
-# today = date.today().replace(month=11, day=30)
-# x = DA.make_new_acqs_table(today)
-
+# # # # # # DA.get_all()
+# # # # funds = ['ARKK', 'ARKQ', 'ARKW', 'ARKG']
+# today = date.today().replace(month=12, day=8)
+# yesterday = date.today().replace(month=12, day=7)
+# x = DA.get_curr_total_top_ten(today)
 # print(x)
+# top_tickers = x['ticker'].to_list()
+# # print(top_tickers)
+# y = DA.get_prev_total_top_ten(yesterday, top_tickers)
+# print(y)
+# # DA.get_prev_ranks(yesterday, top_tickers)
+# DA.make_daily_total_top_ten_table(today)

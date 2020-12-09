@@ -36,16 +36,7 @@ class EmailUtils():
 
                     <b>TOP 10 HOLDINGS </b>
                     <br>
-                    {table0}
-                    <br>
-                    {table1}
-                    <br>
-                    {table2}
-                    <br>
-                    {table3}
-                    <br>
-                    {table4}
-                    <br>
+                    {top_ten_table}
                     <br>
                     Good Luck,
                     <br>
@@ -58,14 +49,14 @@ class EmailUtils():
                 </html>
                 """
         tables = []
-        funds = ["ARKK", "ARKW", "ARKG", "ARKQ", "ARKF"]
-        today = date.today().replace(day=4)
-
+        # funds = ["ARKK", "ARKW", "ARKG", "ARKQ", "ARKF"]
+        today = date.today()
         new_acqs_table = DA.make_new_acqs_table(today)
         sell_offs_table = DA.make_sell_offs_table(today)
+        top_ten_table = DA.make_daily_total_top_ten_table(today)
 
-        for fund in funds:
-            tables.append(DA.make_daily_top_ten_table(today, fund))
+        # for fund in funds:
+        #     tables.append(DA.make_daily_top_ten_table(today, fund))
         # for file in files:
         #     tables.append(DA.top_ten_table(file))
 
@@ -85,7 +76,7 @@ class EmailUtils():
             for name, email in receivers.items():
                 msg = MIMEMultipart()
                 msg["Subject"] = "ARK Tracker Daily Email ({0})".format(
-                    datetime.now().date()
+                    today
                 )
                 msg["From"] = EMAIL_ADDRESS
                 msg["To"] = email
@@ -95,32 +86,28 @@ class EmailUtils():
                             new_acqs_table=new_acqs_table,
                             sell_offs_table=sell_offs_table,
                             name=name,
-                            today=datetime.now().date(),
-                            table0=tables[0],
-                            table1=tables[1],
-                            table2=tables[2],
-                            table3=tables[3],
-                            table4=tables[4],
+                            today=today,
+                            top_ten_table = top_ten_table
                         ),
                         "html",
                     )
                 )
 
-                for file_path in files:
-                    file_name = file_path.split("/")[-1]
-                    with open(file_path, "rb") as attachment:
-                        # Add file as application/octet-stream
-                        # Email client can usually download this automatically as attachment
-                        part = MIMEBase("application", "octet-stream")
-                        part.set_payload(attachment.read())
-                    # Encode file in ASCII characters to send by email
-                    encoders.encode_base64(part)
+                # for file_path in files:
+                #     file_name = file_path.split("/")[-1]
+                #     with open(file_path, "rb") as attachment:
+                #         # Add file as application/octet-stream
+                #         # Email client can usually download this automatically as attachment
+                #         part = MIMEBase("application", "octet-stream")
+                #         part.set_payload(attachment.read())
+                #     # Encode file in ASCII characters to send by email
+                #     encoders.encode_base64(part)
 
-                    # Add header as key/value pair to attachment part
-                    part.add_header(
-                        "Content-Disposition", f"attachment; filename= {file_name}"
-                    )
-                    msg.attach(part)
+                #     # Add header as key/value pair to attachment part
+                #     part.add_header(
+                #         "Content-Disposition", f"attachment; filename= {file_name}"
+                #     )
+                #     msg.attach(part)
 
                 smtp.send_message(msg)
                 del msg

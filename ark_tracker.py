@@ -22,7 +22,7 @@ def run_ark_bot():
 if __name__ == "__main__":
     run_ark_bot()
     
-    # scheduled_time = "19:00"
+    # scheduled_time = "19:30"
 
     # schedule.every().monday.at(scheduled_time).do(run_ark_bot)
     # schedule.every().tuesday.at(scheduled_time).do(run_ark_bot)
