@@ -8,13 +8,21 @@ from ark_data_utils import ArkDataUtils
 from email_utils import EmailUtils
 
 def run_ark_bot():
-    ADU = ArkDataUtils() 
+    input_date = date.today().replace(day=18)
+    ADU = ArkDataUtils(input_date) 
     DA = DataAnalysis("ark_holdings.db")
-    EMAIL = EmailUtils()
+    
+    receivers = {
+            # 'Kwou' : 'kzhengnm@gmail.com',
+            "Joe": "joe_yang999@yahoo.com",
+            "Eugene": "yuanjinglin88@gmail.com",
+            "Lin": "linzhengnm@gmail.com",
+        }
+    EMAIL = EmailUtils(input_date, receivers)
 
     data = ADU.get_ark_data()
     DA.save_to_db(data)
-    EMAIL.send_email(data)
+    EMAIL.send_email()
 
     print('Job Completed!!!')
 

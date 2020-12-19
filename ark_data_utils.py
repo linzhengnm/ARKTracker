@@ -3,7 +3,7 @@ import os
 from datetime import date
 
 class ArkDataUtils:
-    def __init__(self):
+    def __init__(self, input_date):
         self.urls = [
             "https://ark-funds.com/wp-content/fundsiteliterature/csv/ARK_INNOVATION_ETF_ARKK_HOLDINGS.csv",
             "https://ark-funds.com/wp-content/fundsiteliterature/csv/ARK_AUTONOMOUS_TECHNOLOGY_&_ROBOTICS_ETF_ARKQ_HOLDINGS.csv",
@@ -13,6 +13,7 @@ class ArkDataUtils:
             "https://ark-funds.com/wp-content/fundsiteliterature/csv/THE_3D_PRINTING_ETF_PRNT_HOLDINGS.csv",
             "https://ark-funds.com/wp-content/fundsiteliterature/csv/ARK_ISRAEL_INNOVATIVE_TECHNOLOGY_ETF_IZRL_HOLDINGS.csv",
         ]
+        self.input_date = input_date
 
     def get_ark_data(self):
         urls = self.urls
@@ -27,7 +28,7 @@ class ArkDataUtils:
         return newdir
 
     def make_folder(self):
-        today = date.today()
+        today = self.input_date
         newdir = os.getcwd() + "/data/" + str(today) 
         if not (os.path.exists(newdir)):
             os.mkdir(newdir)

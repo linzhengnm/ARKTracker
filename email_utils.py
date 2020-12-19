@@ -11,8 +11,12 @@ from data_analysis import DataAnalysis
 DA = DataAnalysis("ark_holdings.db")
 
 class EmailUtils():
-    def send_email(self, file_dir):
-        files = glob.glob(file_dir + "/*.csv")
+    def __init__(self, input_date, receivers):
+        self.input_date = input_date
+        self.receivers = receivers
+        
+    def send_email(self):
+        # files = glob.glob(file_dir + "/*.csv")
         EMAIL_ADDRESS = os.environ.get("ark_tracker_email")
         EMAIL_PASSWORD = os.environ.get("ark_tracker_password")
         html = """\
@@ -20,7 +24,7 @@ class EmailUtils():
             
                 <body>
                     <p>Hi {name},<br><br>
-                    AS <b>{today}</b>
+                    AS <b>{input_date}</b>
                     <br>
                     Here is your update for <strong><a href="https://ark-funds.com/investor-resources">ARK INVEST</a></strong>.
                     <br>
@@ -34,9 +38,14 @@ class EmailUtils():
                     {sell_offs_table}
                     <br>
 
-                    <b>TOP 10 HOLDINGS </b>
+                    <b>TOP HOLDINGS </b>
                     <br>
-                    {top_ten_table}
+                    {top_holdings_table}
+                    <br>
+
+                    <b>ACTIVE TRADES </b>
+                    <br>
+                    {daily_active_table}
                     <br>
                     Good Luck,
                     <br>
@@ -48,24 +57,15 @@ class EmailUtils():
                 </body>
                 </html>
                 """
-        tables = []
+        # tables = []
         # funds = ["ARKK", "ARKW", "ARKG", "ARKQ", "ARKF"]
-        today = date.today()
-        new_acqs_table = DA.make_new_acqs_table(today)
-        sell_offs_table = DA.make_sell_offs_table(today)
-        top_ten_table = DA.make_daily_total_top_ten_table(today)
-
-        # for fund in funds:
-        #     tables.append(DA.make_daily_top_ten_table(today, fund))
-        # for file in files:
-        #     tables.append(DA.top_ten_table(file))
-
-        receivers = {
-            # 'Kwou' : 'kzhengnm@gmail.com',
-            # "Joe": "joe_yang999@yahoo.com",
-            # "Eugene": "yuanjinglin88@gmail.com",
-            "Lin": "linzhengnm@gmail.com",
-        }
+        input_date = self.input_date
+        new_acqs_table = DA.make_new_acqs_table(input_date)
+        sell_offs_table = DA.make_sell_offs_table(input_date)
+        top_holdings_table = DA.make_daily_total_top_holdings_table(input_date, 500)
+        daily_active_table = DA.make_daily_active_trades_table(input_date, 20)
+        receivers = self.receivers
+        # daily_active_buys_table = DA.make_daily_active_buys_table(input_date, 15)
 
         with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
             smtp.ehlo()
@@ -76,7 +76,7 @@ class EmailUtils():
             for name, email in receivers.items():
                 msg = MIMEMultipart()
                 msg["Subject"] = "ARK Tracker Daily Email ({0})".format(
-                    today
+                    input_date
                 )
                 msg["From"] = EMAIL_ADDRESS
                 msg["To"] = email
@@ -86,8 +86,10 @@ class EmailUtils():
                             new_acqs_table=new_acqs_table,
                             sell_offs_table=sell_offs_table,
                             name=name,
-                            today=today,
-                            top_ten_table = top_ten_table
+                            input_date=input_date,
+                            top_holdings_table = top_holdings_table,
+                            daily_active_table = daily_active_table
+                            # daily_active_buys_table = daily_active_buys_table
                         ),
                         "html",
                     )
